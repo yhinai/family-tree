@@ -1,16 +1,160 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as d3 from 'd3';
 
+// Family data
+const FAMILY_DATA = {
+  name: "العائلة",
+  children: [
+    {
+      name: "جمعة",
+      children: [
+        { name: "حمدان" },
+        { name: "هناء" },
+        { name: "هزاع" },
+        { name: "هالة" },
+        { name: "هاجر" },
+        { name: "سالم" },
+        { name: "يوسف" },
+        { name: "محمد" }
+      ]
+    },
+    {
+      name: "سعيد",
+      children: [
+        { name: "يحيى" },
+        { name: "سالم" },
+        { name: "مريم" },
+        { name: "احمد" }
+      ]
+    },
+    {
+      name: "حمد",
+      children: [
+        { name: "سالم" },
+        { name: "حياة" },
+        { name: "امير" },
+        { name: "زوينة" },
+        { name: "دانة" },
+        { name: "الحهد" },
+        { name: "أمين" },
+        { name: "عبدالله" },
+        { name: "الوليد" },
+        { name: "احمد" },
+        { name: "امل" },
+        { name: "المهدي" }
+      ]
+    },
+    {
+      name: "محمد",
+      children: [
+        { name: "سالم" },
+        { name: "عسى" },
+        { name: "عبد العزيز" },
+        { name: "عمران" },
+        { name: "طارق" }
+      ]
+    },
+    {
+      name: "علي",
+      children: [
+        { name: "زوينة" },
+        { name: "تغاريد" },
+        { name: "زهور" },
+        { name: "سالم" }
+      ]
+    },
+    {
+      name: "عائشة",
+      children: [
+        { name: "سلطان" },
+        { name: "عبدالله" },
+        { name: "راشد" },
+        { name: "أسماء" },
+        { name: "محمد" }
+      ]
+    },
+    {
+      name: "نصراء",
+      children: [
+        { name: "لمك" },
+        { name: "جهينة" },
+        { name: "سالم" },
+        { name: "بثينة" },
+        { name: "عبدالملك" },
+        { name: "مكية" },
+        { name: "مالك" },
+        { name: "محمد" }
+      ]
+    },
+    {
+      name: "شيخة",
+      children: [
+        { name: "سعود" },
+        { name: "ميرة" },
+        { name: "محمد" },
+        { name: "مروة" },
+        { name: "فيصل" },
+        { name: "عمر" }
+      ]
+    },
+    {
+      name: "فاطمة",
+      children: [
+        { name: "بدر" },
+        { name: "براءة" },
+        { name: "ريم" },
+        { name: "رائد" },
+        { name: "هبة" },
+        { name: "ثريا" }
+      ]
+    },
+    {
+      name: "ميثاء",
+      children: [
+        { name: "نوف" },
+        { name: "حمد" },
+        { name: "نور" },
+        { name: "ريم" },
+        { name: "أية" },
+        { name: "مريم" }
+      ]
+    }
+  ]
+};
+
+// Constants for layout configuration
+const CONFIG = {
+  childrenPerRow: 3,
+  nodeSpacing: 120,
+  minHorizontalSpacing: 80,
+  minVerticalSpacing: 50,
+  verticalRowSpacing: 160,
+  childVerticalSpacing: 80,
+  nodesPerRow: 4
+};
+
 const AdvancedFamilyTree = () => {
-  const svgRef = useRef();
+  const svgRef = useRef(null);
   const [selectedNode, setSelectedNode] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [viewMode, setViewMode] = useState('tree'); // 'tree' or 'radial'
+  const [infoVisible, setInfoVisible] = useState(false);
 
-  useEffect(() => {
-    // Clear any existing SVG content
-    d3.select(svgRef.current).selectAll("*").remove();
+  // Create zoom controller with useCallback to avoid re-creation on re-renders
+  const createZoomBehavior = useCallback((svg) => {
+    return d3.zoom()
+      .scaleExtent([0.3, 3])
+      .on("zoom", (event) => {
+        svg.attr("transform", event.transform);
+        setZoomLevel(event.transform.k.toFixed(1));
+      });
+  }, []);
+
+  // Handler for resetting view - now properly used in UI
+  const resetView = useCallback(() => {
+    if (!svgRef.current) return;
     
+<<<<<<< HEAD
     // Family data
     const data = {
       name: "Family Root",
@@ -157,10 +301,26 @@ const AdvancedFamilyTree = () => {
       layout = d3.cluster()
         .size([2 * Math.PI, Math.min(containerWidth, containerHeight) / 2 - 120]);
     }
+=======
+    const containerWidth = window.innerWidth;
+    const containerHeight = window.innerHeight;
     
-    // Assign x and y coordinates to each node
-    layout(root);
+    const resetScale = 0.65;
+    const zoom = createZoomBehavior(d3.select(svgRef.current).select("g"));
+>>>>>>> d66f112 (Add family tree visualization)
+    
+    d3.select(svgRef.current)
+      .transition()
+      .duration(750)
+      .call(
+        zoom.transform,
+        d3.zoomIdentity.translate(containerWidth/2, containerHeight/2).scale(resetScale)
+      );
+    
+    setZoomLevel(resetScale);
+  }, [createZoomBehavior]);
 
+<<<<<<< HEAD
     // For tree layout, adjust second generation positions to prevent overlap
     if (viewMode === 'tree') {
       // Group nodes by their parent
@@ -216,8 +376,16 @@ const AdvancedFamilyTree = () => {
     } else {
       svg.attr("transform", `translate(${containerWidth/2}, ${containerHeight/2})`);
     }
+=======
+  // Toggle view between tree and radial - now used in UI
+  const toggleView = useCallback(() => {
+    setViewMode(prev => prev === 'tree' ? 'radial' : 'tree');
+    setSelectedNode(null);
+  }, []);
+>>>>>>> d66f112 (Add family tree visualization)
 
-    // Create a gradient for nodes
+  // Helper function to create SVG gradients and filters
+  const createDefs = (svg) => {
     const defs = svg.append("defs");
     
     // Node gradient
@@ -313,43 +481,159 @@ const AdvancedFamilyTree = () => {
       .attr("in", "offsetBlur");
     feMerge.append("feMergeNode")
       .attr("in", "SourceGraphic");
+      
+    return defs;
+  };
 
-    // Create links (paths between nodes)
-    if (viewMode === 'tree') {
-      svg.selectAll(".link")
-        .data(root.links())
-        .enter()
-        .append("path")
-        .attr("class", "link")
-        .attr("d", d => {
-          return `M${d.source.x},${d.source.y}
-                  C${d.source.x},${(d.source.y + d.target.y) / 2}
-                   ${d.target.x},${(d.source.y + d.target.y) / 2}
-                   ${d.target.x},${d.target.y}`;
-        })
-        .attr("fill", "none")
-        .attr("stroke", "#b8c2cc")
-        .attr("stroke-width", 1.5)
-        .attr("opacity", 0.8);
-    } else {
-      svg.selectAll(".link")
-        .data(root.links())
-        .enter()
-        .append("path")
-        .attr("class", "link")
-        .attr("d", d => {
-          return d3.linkRadial()
-            .angle(d => d.x)
-            .radius(d => d.y)(d);
-        })
-        .attr("fill", "none")
-        .attr("stroke", "#b8c2cc")
-        .attr("stroke-width", 1.5)
-        .attr("opacity", 0.8);
+  // Function to position nodes in tree layout
+  const positionNodesInTreeLayout = (root, containerWidth) => {
+    // Position first generation nodes (uncles and aunts) in rows
+    const firstGenNodes = root.children;
+    
+    // Position first generation nodes in rows
+    firstGenNodes.forEach((node, i) => {
+      const row = Math.floor(i / CONFIG.nodesPerRow);
+      const col = i % CONFIG.nodesPerRow;
+      
+      // Center the nodes by using full width and calculating offsets
+      const totalRowWidth = containerWidth * 0.9;
+      const nodeSpacing = totalRowWidth / CONFIG.nodesPerRow;
+      
+      // Calculate horizontal position to center the entire row
+      const rowStartX = (containerWidth - totalRowWidth) / 2 + nodeSpacing / 2;
+      
+      // Set positions with centered, evenly distributed spacing
+      node.x = rowStartX + col * nodeSpacing;
+      node.y = 150 + row * 500; // Keep large vertical spacing between rows
+    });
+    
+    // Position children under their parents
+    firstGenNodes.forEach((parentNode) => {
+      if (!parentNode.children || parentNode.children.length === 0) return;
+      
+      const childrenCount = parentNode.children.length;
+      
+      // Position children in rows beneath their parent
+      parentNode.children.forEach((childNode, i) => {
+        const row = Math.floor(i / CONFIG.childrenPerRow);
+        const col = i % CONFIG.childrenPerRow;
+        
+        // Set consistent spacing for all children
+        const nodeWidth = CONFIG.nodeSpacing;
+        const childRowWidth = Math.min(childrenCount - row * CONFIG.childrenPerRow, CONFIG.childrenPerRow) * nodeWidth;
+        
+        // Center children directly under their parent
+        const startX = parentNode.x - childRowWidth / 2 + nodeWidth / 2;
+        
+        // Set child positions with even spacing
+        childNode.x = startX + col * nodeWidth;
+        childNode.y = parentNode.y + CONFIG.verticalRowSpacing + row * CONFIG.childVerticalSpacing;
+      });
+    });
+    
+    // Resolve node overlaps
+    resolveNodeOverlaps(root);
+  };
+
+  // Function to resolve node overlaps
+  const resolveNodeOverlaps = (root) => {
+    const allNodes = root.descendants();
+    const secondGenNodes = allNodes.filter(node => node.depth === 2);
+    
+    // Detect and fix overlaps - several passes to ensure resolution
+    for (let pass = 0; pass < 3; pass++) {
+      // Check for overlaps within second generation
+      for (let i = 0; i < secondGenNodes.length; i++) {
+        for (let j = i + 1; j < secondGenNodes.length; j++) {
+          const nodeA = secondGenNodes[i];
+          const nodeB = secondGenNodes[j];
+          
+          // Skip if they have the same parent (siblings)
+          if (nodeA.parent === nodeB.parent) continue;
+          
+          // Check for potential overlap
+          const horizontalDist = Math.abs(nodeA.x - nodeB.x);
+          const verticalDist = Math.abs(nodeA.y - nodeB.y);
+          
+          // If too close, adjust positions
+          if (horizontalDist < CONFIG.minHorizontalSpacing && verticalDist < CONFIG.minVerticalSpacing) {
+            // Calculate adjustment values
+            const horizontalAdjust = (CONFIG.minHorizontalSpacing - horizontalDist) / 2 + 5;
+            const verticalAdjust = (CONFIG.minVerticalSpacing - verticalDist) / 2 + 5;
+            
+            // Decide which direction to move - prefer horizontal when possible
+            if (horizontalDist < verticalDist) {
+              // Move horizontally
+              if (nodeA.x < nodeB.x) {
+                nodeA.x -= horizontalAdjust;
+                nodeB.x += horizontalAdjust;
+              } else {
+                nodeA.x += horizontalAdjust;
+                nodeB.x -= horizontalAdjust;
+              }
+            } else {
+              // Move vertically
+              if (nodeA.y < nodeB.y) {
+                nodeA.y -= verticalAdjust;
+                nodeB.y += verticalAdjust;
+              } else {
+                nodeA.y += verticalAdjust;
+                nodeB.y -= verticalAdjust;
+              }
+            }
+          }
+        }
+      }
     }
+  };
 
-    // Create the node groups
-    const nodes = svg.selectAll(".node")
+  // Draw tree links with nice curves
+  const createTreeLinks = (svg, root) => {
+    return svg.selectAll(".link")
+      .data(root.links())
+      .enter()
+      .append("path")
+      .attr("class", "link")
+      .attr("d", d => {
+        // Calculate control points for a graceful curve
+        const sourceX = d.source.x;
+        const sourceY = d.source.y;
+        const targetX = d.target.x;
+        const targetY = d.target.y;
+        
+        // For custom positioning, use Bezier curves
+        return `M${sourceX},${sourceY}
+                C${sourceX},${sourceY + (targetY - sourceY) * 0.4}
+                 ${targetX},${sourceY + (targetY - sourceY) * 0.6}
+                 ${targetX},${targetY}`;
+      })
+      .attr("fill", "none")
+      .attr("stroke", "#b8c2cc")
+      .attr("stroke-width", 1)
+      .attr("opacity", 0.7);
+  };
+
+  // Draw radial links
+  const createRadialLinks = (svg, root) => {
+    return svg.selectAll(".link")
+      .data(root.links())
+      .enter()
+      .append("path")
+      .attr("class", "link")
+      .attr("d", d => {
+        return d3.linkRadial()
+          .angle(d => d.x)
+          .radius(d => d.y)(d);
+      })
+      .attr("fill", "none")
+      .attr("stroke", "#b8c2cc")
+      .attr("stroke-width", 1.5)
+      .attr("opacity", 0.8);
+  };
+
+  // Create node groups with proper attributes
+  const createNodes = (svg, root, viewMode, setSelectedNode) => {
+    return svg.selectAll(".node")
       .data(root.descendants())
       .enter()
       .append("g")
@@ -363,7 +647,9 @@ const AdvancedFamilyTree = () => {
           return `translate(${Math.sin(d.x) * d.y}, ${-Math.cos(d.x) * d.y})`;
         }
       });
+  };
 
+<<<<<<< HEAD
     // Function to measure text width - needed for second generation
     const getTextWidth = (text, fontSize) => {
       const canvas = document.createElement('canvas');
@@ -391,6 +677,19 @@ const AdvancedFamilyTree = () => {
         }
         return 120;
       })
+=======
+  // Add node backgrounds with styling
+  const addNodeBackgrounds = (nodes) => {
+    return nodes.append("rect")
+      .attr("rx", 6) // Rounded corners
+      .attr("ry", 6)
+      .attr("x", d => {
+        const width = d.depth === 0 ? 110 : d.depth === 1 ? 100 : 90;
+        return -width / 2;
+      })
+      .attr("y", -15)
+      .attr("width", d => d.depth === 0 ? 110 : d.depth === 1 ? 100 : 90)
+>>>>>>> d66f112 (Add family tree visualization)
       .attr("height", 30)
       .attr("fill", d => {
         if (d.depth === 0) return "url(#rootGradient)";
@@ -402,21 +701,29 @@ const AdvancedFamilyTree = () => {
         if (d.depth === 1) return "#2980b9";
         return "#d1d5db";
       })
-      .attr("stroke-width", 1)
+      .attr("stroke-width", 1.5)
       .attr("filter", "url(#drop-shadow)")
       .attr("class", "node-rect");
+  };
 
-    // Add node labels
-    nodes.append("text")
+  // Add node labels
+  const addNodeLabels = (nodes) => {
+    return nodes.append("text")
       .attr("dy", 5)
       .attr("text-anchor", "middle")
       .text(d => d.data.name)
       .attr("fill", d => d.depth < 2 ? "#ffffff" : "#333333")
       .attr("font-family", "Arial, sans-serif")
-      .attr("font-size", d => d.depth === 0 ? 14 : 12)
+      .attr("font-size", d => {
+        if (d.depth === 0) return 14; // Root node
+        if (d.depth === 1) return 12; // First generation 
+        return 11; // Second generation
+      })
       .attr("font-weight", d => d.depth < 2 ? "bold" : "normal");
+  };
 
-    // Add node animations and interactivity
+  // Add node interactivity
+  const addNodeInteractivity = (nodes, svg, zoom, containerWidth, containerHeight, viewMode) => {
     nodes
       .on("mouseover", function(event, d) {
         // Highlight the node
@@ -451,15 +758,15 @@ const AdvancedFamilyTree = () => {
           .duration(300)
           .attr("filter", "url(#drop-shadow)")
           .attr("transform", "scale(1)")
-          .attr("stroke-width", 1);
+          .attr("stroke-width", 1.5);
         
         // Reset connections
         svg.selectAll(".link")
           .transition()
           .duration(300)
           .attr("stroke", "#b8c2cc")
-          .attr("stroke-width", 1.5)
-          .attr("opacity", 0.8);
+          .attr("stroke-width", viewMode === 'tree' ? 1 : 1.5)
+          .attr("opacity", viewMode === 'tree' ? 0.7 : 0.8);
       })
       .on("click", function(event, d) {
         // Center and zoom to the clicked node
@@ -476,16 +783,20 @@ const AdvancedFamilyTree = () => {
           
         setZoomLevel(1.5);
       });
+  };
 
-    // Add initial animation
+  // Add animation effects to nodes and links
+  const addAnimationEffects = (nodes, links) => {
+    // Node animations
     nodes.attr("opacity", 0)
       .transition()
-      .duration(800)
-      .delay((d, i) => i * 20)
+      .duration(1000)
+      .delay((d, i) => i * 30)
+      .ease(d3.easeCubicOut)
       .attr("opacity", 1);
       
-    svg.selectAll(".link")
-      .attr("stroke-dasharray", function() {
+    // Link animations  
+    links.attr("stroke-dasharray", function() {
         const length = this.getTotalLength();
         return `${length} ${length}`;
       })
@@ -493,44 +804,149 @@ const AdvancedFamilyTree = () => {
         return this.getTotalLength();
       })
       .transition()
-      .duration(800)
-      .delay((d, i) => i * 15)
+      .duration(1000)
+      .delay((d, i) => i * 20)
+      .ease(d3.easeCubicOut)
       .attr("stroke-dashoffset", 0);
-
-    // Add zoom functionality
-    const zoom = d3.zoom()
-      .scaleExtent([0.3, 3])
-      .on("zoom", (event) => {
-        svg.attr("transform", event.transform);
-        setZoomLevel(event.transform.k.toFixed(1));
-      });
-
-    d3.select(svgRef.current)
-      .call(zoom);
-
-  }, [viewMode]);
-
-  // Function to reset the view
-  const resetView = () => {
-    d3.select(svgRef.current)
-      .transition()
-      .duration(750)
-      .call(
-        d3.zoom().transform,
-        d3.zoomIdentity.translate(viewMode === 'tree' ? 50 : svgRef.current.clientWidth/2, 
-                                 viewMode === 'tree' ? 50 : svgRef.current.clientHeight/2)
-                 .scale(1)
-      );
-    setZoomLevel(1);
   };
 
-  // Toggle view between tree and radial
-  const toggleView = () => {
-    setViewMode(viewMode === 'tree' ? 'radial' : 'tree');
-    setSelectedNode(null);
+  // Initial tree rendering
+  const setupInitialZoom = (svgSelection, zoom, containerWidth) => {
+    setTimeout(() => {
+      const initialScale = window.innerWidth > 1500 ? 0.75 : 0.6; // Dynamic scaling based on screen size
+      const initialTransform = d3.zoomIdentity
+        .translate(containerWidth * 0.1, 30) // Center the view
+        .scale(initialScale);
+        
+      svgSelection
+        .call(zoom.transform, initialTransform);
+      
+      setZoomLevel(initialScale.toFixed(1));
+    }, 100);
+  };
+
+  // Main effect to create and update the visualization
+  useEffect(() => {
+    if (!svgRef.current) return;
+    
+    // Handle window resize
+    const handleResize = () => {
+      // Only trigger redraw if there's a significant change in window dimensions
+      if (Math.abs(window.innerWidth - previousWidth) > 100 ||
+          Math.abs(window.innerHeight - previousHeight) > 100) {
+        previousWidth = window.innerWidth;
+        previousHeight = window.innerHeight;
+        // Force a re-render by toggling the view mode and back
+        setViewMode(prev => {
+          setTimeout(() => setViewMode(prev), 0);
+          return prev === 'tree' ? 'temp' : 'tree';
+        });
+      }
+    };
+    
+    // Store previous dimensions
+    let previousWidth = window.innerWidth;
+    let previousHeight = window.innerHeight;
+    
+    // Add resize event listener
+    window.addEventListener('resize', handleResize);
+    
+    // Clear any existing SVG content
+    d3.select(svgRef.current).selectAll("*").remove();
+    
+    // Get container dimensions
+    const containerWidth = window.innerWidth || 1200;
+    const containerHeight = window.innerHeight || 800;
+
+    // Create hierarchy
+    const root = d3.hierarchy(FAMILY_DATA);
+    
+    // Set layout based on view mode
+    let layout;
+    if (viewMode === 'tree') {
+      layout = d3.tree()
+        .size([containerWidth * 0.95, containerHeight * 0.75]);
+    } else {
+      layout = d3.cluster()
+        .size([2 * Math.PI, Math.min(containerWidth, containerHeight) / 2 - 120]);
+    }
+    
+    // Assign coordinates to nodes
+    layout(root);
+
+    // Position nodes in tree layout
+    if (viewMode === 'tree') {
+      positionNodesInTreeLayout(root, containerWidth);
+    }
+
+    // Create SVG element
+    const svg = d3.select(svgRef.current)
+      .attr("width", "100%")
+      .attr("height", "100%")
+      .attr("viewBox", [0, 0, containerWidth, containerHeight])
+      .append("g");
+      
+    // Position SVG based on view mode
+    if (viewMode === 'tree') {
+      svg.attr("transform", `translate(0, 0)`);
+    } else {
+      svg.attr("transform", `translate(${containerWidth/2}, ${containerHeight/2})`);
+    }
+
+    // Create gradient definitions and filters
+    createDefs(svg);
+
+    // Create links based on view mode
+    const links = viewMode === 'tree' 
+      ? createTreeLinks(svg, root)
+      : createRadialLinks(svg, root);
+
+    // Create nodes
+    const nodes = createNodes(svg, root, viewMode, setSelectedNode);
+
+    // Add node backgrounds
+    addNodeBackgrounds(nodes);
+
+    // Add node labels
+    addNodeLabels(nodes);
+
+    // Create zoom behavior
+    const zoom = createZoomBehavior(svg);
+
+    // Add interactivity to nodes
+    addNodeInteractivity(nodes, svg, zoom, containerWidth, containerHeight, viewMode);
+
+    // Add animations
+    addAnimationEffects(nodes, links);
+
+    // Setup zoom behavior
+    const svgSelection = d3.select(svgRef.current);
+    svgSelection.call(zoom);
+    
+    // Set initial zoom for tree view
+    if (viewMode === 'tree') {
+      setupInitialZoom(svgSelection, zoom, containerWidth);
+    }
+    
+    // Store the current svgRef for cleanup
+    const currentSvgRef = svgRef.current;
+    
+    // Cleanup function
+    return () => {
+      if (currentSvgRef) {
+        d3.select(currentSvgRef).on('.zoom', null);
+      }
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [viewMode, createZoomBehavior]);
+
+  // Toggle info panel visibility
+  const toggleInfoPanel = () => {
+    setInfoVisible(!infoVisible);
   };
 
   return (
+<<<<<<< HEAD
     <div className="w-full h-screen flex flex-col items-center bg-gradient-to-b from-gray-50 to-gray-100 relative">
       <h1 className="text-3xl font-bold text-gray-800 mt-4 mb-1 absolute top-0 left-4 z-10">Family Tree</h1>
       
@@ -601,9 +1017,44 @@ const AdvancedFamilyTree = () => {
               <span className="text-gray-700 text-xs">Children</span>
             </div>
           </div>
-        </div>
+=======
+    <div className="w-full h-screen flex flex-col relative">
+      {/* Control Panel */}
+      <div className="absolute top-4 right-4 z-10 bg-white p-2 rounded-lg shadow-md flex gap-2">
+        <button 
+          onClick={resetView}
+          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+        >
+          Reset View
+        </button>
+        <button 
+          onClick={toggleView}
+          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+        >
+          Toggle View: {viewMode === 'tree' ? 'Tree' : 'Radial'}
+        </button>
+        <button 
+          onClick={toggleInfoPanel}
+          className="px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600 text-sm"
+        >
+          {infoVisible ? 'Hide Info' : 'Show Info'}
+        </button>
       </div>
       
+      {/* Info Panel */}
+      {infoVisible && selectedNode && (
+        <div className="absolute top-16 right-4 z-10 bg-white p-3 rounded-lg shadow-md w-64">
+          <h3 className="font-bold mb-2">{selectedNode.name}</h3>
+          <p className="text-sm">Type: {selectedNode.level}</p>
+          {selectedNode.children > 0 && (
+            <p className="text-sm">Children: {selectedNode.children}</p>
+          )}
+          <p className="text-sm mt-2">Zoom Level: {zoomLevel}x</p>
+>>>>>>> d66f112 (Add family tree visualization)
+        </div>
+      )}
+      
+<<<<<<< HEAD
       {/* Main Visualization - Takes full screen */}
       <div className="w-full h-full overflow-hidden">
         <svg ref={svgRef} width="100%" height="100%" className="cursor-move"></svg>
@@ -611,6 +1062,11 @@ const AdvancedFamilyTree = () => {
       
       <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 bg-white bg-opacity-70 px-2 py-1 rounded-full">
         Scroll to zoom, drag to pan, click on nodes to focus
+=======
+      {/* Main Visualization */}
+      <div className="w-full h-full flex items-center justify-center overflow-hidden">
+        <svg ref={svgRef} width="100%" height="100%" className="cursor-move"></svg>
+>>>>>>> d66f112 (Add family tree visualization)
       </div>
     </div>
   );
