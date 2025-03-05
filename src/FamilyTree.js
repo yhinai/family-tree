@@ -35,7 +35,7 @@ const FAMILY_DATA = {
         { name: "امير" },
         { name: "زوينة" },
         { name: "دانة" },
-        { name: "الحهد" },
+        { name: "العهد" },
         { name: "أمين" },
         { name: "عبدالله" },
         { name: "الوليد" },
@@ -130,7 +130,13 @@ const CONFIG = {
   minVerticalSpacing: 50,
   verticalRowSpacing: 160,
   childVerticalSpacing: 80,
-  nodesPerRow: 4
+  // nodesPerRow will be calculated dynamically based on screen width
+  getNodesPerRow: (width) => {
+    if (width < 480) return 1; // Mobile phones
+    if (width < 768) return 2; // Tablets (portrait)
+    if (width < 1024) return 3; // Tablets (landscape) and small laptops
+    return 4; // Desktops and large screens
+  }
 };
 
 const AdvancedFamilyTree = () => {
@@ -154,160 +160,11 @@ const AdvancedFamilyTree = () => {
   const resetView = useCallback(() => {
     if (!svgRef.current) return;
     
-<<<<<<< HEAD
-    // Family data
-    const data = {
-      name: "Family Root",
-      children: [
-        {
-          name: "Uncle Jumaa",
-          children: [
-            { name: "Hamdan" },
-            { name: "Hana" },
-            { name: "Hazza" },
-            { name: "Hala" },
-            { name: "Hajar" },
-            { name: "Salem" },
-            { name: "Youssef" },
-            { name: "Mohammed" }
-          ]
-        },
-        {
-          name: "Uncle Saeed",
-          children: [
-            { name: "Yahya" },
-            { name: "Salem" },
-            { name: "Mariam" },
-            { name: "Ahmed" }
-          ]
-        },
-        {
-          name: "Uncle Hamad",
-          children: [
-            { name: "Salem" },
-            { name: "Hayat" },
-            { name: "Amir" }
-          ]
-        },
-        {
-          name: "Aunt Zawina",
-          children: [
-            { name: "Dana" },
-            { name: "Al-Hahd" },
-            { name: "Amin" }
-          ]
-        },
-        {
-          name: "Uncle Abdullah",
-          children: [
-            { name: "Al-Walid" },
-            { name: "Ahmed" },
-            { name: "Amal" },
-            { name: "Al-Mahdi" }
-          ]
-        },
-        {
-          name: "Uncle Mohammed",
-          children: [
-            { name: "Salem" },
-            { name: "Asa" },
-            { name: "Abdulaziz" },
-            { name: "Imran" },
-            { name: "Tariq" }
-          ]
-        },
-        {
-          name: "Uncle Ali",
-          children: [
-            { name: "Zawina" },
-            { name: "Taghreed" },
-            { name: "Zahoor" },
-            { name: "Salem" }
-          ]
-        },
-        {
-          name: "Aunt Aisha",
-          children: [
-            { name: "Sultan" },
-            { name: "Abdullah" },
-            { name: "Rashid" },
-            { name: "Asma" },
-            { name: "Mohammed" }
-          ]
-        },
-        {
-          name: "Aunt Nasra",
-          children: [
-            { name: "Lamak" },
-            { name: "Jahina" },
-            { name: "Salem" },
-            { name: "Bathina" },
-            { name: "Abdulmalik" },
-            { name: "Makkiyah" },
-            { name: "Malik" },
-            { name: "Mohammed" }
-          ]
-        },
-        {
-          name: "Aunt Sheikha",
-          children: [
-            { name: "Saud" },
-            { name: "Mira" },
-            { name: "Mohammed" },
-            { name: "Marwa" },
-            { name: "Faisal" },
-            { name: "Omar" }
-          ]
-        },
-        {
-          name: "Aunt Fatima",
-          children: [
-            { name: "Bader" },
-            { name: "Baraa" },
-            { name: "Reem" },
-            { name: "Raed" },
-            { name: "Hiba" },
-            { name: "Thuraya" }
-          ]
-        },
-        {
-          name: "Aunt Maytha",
-          children: [
-            { name: "Nawf" },
-            { name: "Hamad" },
-            { name: "Noor" },
-            { name: "Reem" },
-            { name: "Aya" },
-            { name: "Mariam" }
-          ]
-        }
-      ]
-    };
-
-    // Get container dimensions - use the full window size
-    const containerWidth = window.innerWidth || 1200;
-    const containerHeight = window.innerHeight || 800;
-
-    // Create hierarchy
-    const root = d3.hierarchy(data);
-    
-    // Modified layout to allow more space and prevent overlapping
-    let layout;
-    if (viewMode === 'tree') {
-      // Use nodeSize instead of overall size to prevent overlapping
-      layout = d3.tree()
-        .nodeSize([150, 120]); // Increase horizontal spacing between nodes
-    } else {
-      layout = d3.cluster()
-        .size([2 * Math.PI, Math.min(containerWidth, containerHeight) / 2 - 120]);
-    }
-=======
     const containerWidth = window.innerWidth;
     const containerHeight = window.innerHeight;
     
     const resetScale = 0.65;
     const zoom = createZoomBehavior(d3.select(svgRef.current).select("g"));
->>>>>>> d66f112 (Add family tree visualization)
     
     d3.select(svgRef.current)
       .transition()
@@ -320,69 +177,11 @@ const AdvancedFamilyTree = () => {
     setZoomLevel(resetScale);
   }, [createZoomBehavior]);
 
-<<<<<<< HEAD
-    // For tree layout, adjust second generation positions to prevent overlap
-    if (viewMode === 'tree') {
-      // Group nodes by their parent
-      const parentMap = new Map();
-      root.descendants().forEach(node => {
-        if (node.depth === 2) { // Second generation
-          const parentId = node.parent.data.name;
-          if (!parentMap.has(parentId)) {
-            parentMap.set(parentId, []);
-          }
-          parentMap.get(parentId).push(node);
-        }
-      });
-      
-      // For each parent, adjust children positions if needed
-      parentMap.forEach((children, parentId) => {
-        if (children.length > 1) {
-          // Sort children by their original x position
-          children.sort((a, b) => a.x - b.x);
-          
-          // Calculate how many children to place per row
-          const maxPerRow = 3; // Adjust as needed
-          const rows = Math.ceil(children.length / maxPerRow);
-          
-          for (let i = 0; i < children.length; i++) {
-            const row = Math.floor(i / maxPerRow);
-            const col = i % maxPerRow;
-            const node = children[i];
-            
-            // Original x position of the parent
-            const parentX = node.parent.x;
-            
-            // Offset from parent position
-            const xOffset = (col - (Math.min(children.length, maxPerRow) - 1) / 2) * 160;
-            
-            // Update node position
-            node.x = parentX + xOffset;
-            node.y = node.parent.y + 180 + row * 100; // Vertical stacking
-          }
-        }
-      });
-    }
-
-    // Create the SVG element - make it fill the entire container
-    const svg = d3.select(svgRef.current)
-      .attr("width", "100%")
-      .attr("height", "100%")
-      .attr("viewBox", [0, 0, containerWidth, containerHeight])
-      .append("g");
-      
-    if (viewMode === 'tree') {
-      svg.attr("transform", "translate(50, 50)");
-    } else {
-      svg.attr("transform", `translate(${containerWidth/2}, ${containerHeight/2})`);
-    }
-=======
   // Toggle view between tree and radial - now used in UI
   const toggleView = useCallback(() => {
     setViewMode(prev => prev === 'tree' ? 'radial' : 'tree');
     setSelectedNode(null);
   }, []);
->>>>>>> d66f112 (Add family tree visualization)
 
   // Helper function to create SVG gradients and filters
   const createDefs = (svg) => {
@@ -490,14 +289,16 @@ const AdvancedFamilyTree = () => {
     // Position first generation nodes (uncles and aunts) in rows
     const firstGenNodes = root.children;
     
-    // Position first generation nodes in rows
+    // Position first generation nodes in rows - responsive to container width
+    const nodesPerRow = CONFIG.getNodesPerRow(containerWidth);
+    
     firstGenNodes.forEach((node, i) => {
-      const row = Math.floor(i / CONFIG.nodesPerRow);
-      const col = i % CONFIG.nodesPerRow;
+      const row = Math.floor(i / nodesPerRow);
+      const col = i % nodesPerRow;
       
       // Center the nodes by using full width and calculating offsets
       const totalRowWidth = containerWidth * 0.9;
-      const nodeSpacing = totalRowWidth / CONFIG.nodesPerRow;
+      const nodeSpacing = totalRowWidth / nodesPerRow;
       
       // Calculate horizontal position to center the entire row
       const rowStartX = (containerWidth - totalRowWidth) / 2 + nodeSpacing / 2;
@@ -649,35 +450,6 @@ const AdvancedFamilyTree = () => {
       });
   };
 
-<<<<<<< HEAD
-    // Function to measure text width - needed for second generation
-    const getTextWidth = (text, fontSize) => {
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      context.font = `${fontSize}px Arial, sans-serif`;
-      return context.measureText(text).width;
-    };
-
-    // Add node backgrounds with dynamic width based on text length for second generation
-    nodes.append("rect")
-      .attr("rx", 8)
-      .attr("ry", 8)
-      .attr("x", d => {
-        if (d.depth === 2) {
-          const textWidth = getTextWidth(d.data.name, 12);
-          return -Math.max(textWidth/2 + 20, 45); // Ensure minimum width
-        }
-        return d.depth === 0 ? -60 : -60;
-      })
-      .attr("y", -15)
-      .attr("width", d => {
-        if (d.depth === 2) {
-          const textWidth = getTextWidth(d.data.name, 12);
-          return Math.max(textWidth + 40, 90); // Ensure minimum width
-        }
-        return 120;
-      })
-=======
   // Add node backgrounds with styling
   const addNodeBackgrounds = (nodes) => {
     return nodes.append("rect")
@@ -689,7 +461,6 @@ const AdvancedFamilyTree = () => {
       })
       .attr("y", -15)
       .attr("width", d => d.depth === 0 ? 110 : d.depth === 1 ? 100 : 90)
->>>>>>> d66f112 (Add family tree visualization)
       .attr("height", 30)
       .attr("fill", d => {
         if (d.depth === 0) return "url(#rootGradient)";
@@ -722,7 +493,7 @@ const AdvancedFamilyTree = () => {
       .attr("font-weight", d => d.depth < 2 ? "bold" : "normal");
   };
 
-  // Add node interactivity
+  // Add node interactivity - calculate appropriate zoom level based on screen size
   const addNodeInteractivity = (nodes, svg, zoom, containerWidth, containerHeight, viewMode) => {
     nodes
       .on("mouseover", function(event, d) {
@@ -769,11 +540,14 @@ const AdvancedFamilyTree = () => {
           .attr("opacity", viewMode === 'tree' ? 0.7 : 0.8);
       })
       .on("click", function(event, d) {
+        // Calculate zoom factor based on screen width
+        const zoomFactor = containerWidth < 768 ? 1.2 : 1.5;
+        
         // Center and zoom to the clicked node
         const transform = viewMode === 'tree'
-          ? d3.zoomIdentity.translate(containerWidth / 2 - d.x, containerHeight / 2 - d.y).scale(1.5)
+          ? d3.zoomIdentity.translate(containerWidth / 2 - d.x, containerHeight / 2 - d.y).scale(zoomFactor)
           : d3.zoomIdentity.translate(containerWidth / 2, containerHeight / 2)
-              .scale(1.5)
+              .scale(zoomFactor)
               .translate(-Math.sin(d.x) * d.y, Math.cos(d.x) * d.y);
               
         d3.select(svgRef.current)
@@ -781,7 +555,7 @@ const AdvancedFamilyTree = () => {
           .duration(750)
           .call(zoom.transform, transform);
           
-        setZoomLevel(1.5);
+        setZoomLevel(zoomFactor);
       });
   };
 
@@ -810,12 +584,38 @@ const AdvancedFamilyTree = () => {
       .attr("stroke-dashoffset", 0);
   };
 
-  // Initial tree rendering
-  const setupInitialZoom = (svgSelection, zoom, containerWidth) => {
+  // Initial tree rendering with responsive zoom levels
+  const setupInitialZoom = (svgSelection, zoom, containerWidth, containerHeight) => {
     setTimeout(() => {
-      const initialScale = window.innerWidth > 1500 ? 0.75 : 0.6; // Dynamic scaling based on screen size
+      // More granular responsive scaling based on screen width
+      let initialScale;
+      let translateX, translateY;
+      
+      // Determine scale and translation based on screen size
+      if (containerWidth < 480) {
+        // Mobile phones
+        initialScale = 0.4;
+        translateX = containerWidth * 0.5;
+        translateY = 50;
+      } else if (containerWidth < 768) {
+        // Tablets (portrait)
+        initialScale = 0.5;
+        translateX = containerWidth * 0.3;
+        translateY = 40;
+      } else if (containerWidth < 1200) {
+        // Tablets (landscape) and small laptops
+        initialScale = 0.6;
+        translateX = containerWidth * 0.2;
+        translateY = 35;
+      } else {
+        // Desktops and large screens
+        initialScale = 0.75;
+        translateX = containerWidth * 0.1;
+        translateY = 30;
+      }
+      
       const initialTransform = d3.zoomIdentity
-        .translate(containerWidth * 0.1, 30) // Center the view
+        .translate(translateX, translateY)
         .scale(initialScale);
         
       svgSelection
@@ -831,11 +631,18 @@ const AdvancedFamilyTree = () => {
     
     // Handle window resize
     const handleResize = () => {
-      // Only trigger redraw if there's a significant change in window dimensions
+      // Trigger redraw when window dimensions change significantly or
+      // when the number of nodes per row would change based on width
+      const currentNodesPerRow = CONFIG.getNodesPerRow(window.innerWidth);
+      const previousNodesPerRow = CONFIG.getNodesPerRow(previousWidth);
+      
       if (Math.abs(window.innerWidth - previousWidth) > 100 ||
-          Math.abs(window.innerHeight - previousHeight) > 100) {
+          Math.abs(window.innerHeight - previousHeight) > 100 ||
+          currentNodesPerRow !== previousNodesPerRow) {
+        
         previousWidth = window.innerWidth;
         previousHeight = window.innerHeight;
+        
         // Force a re-render by toggling the view mode and back
         setViewMode(prev => {
           setTimeout(() => setViewMode(prev), 0);
@@ -925,7 +732,7 @@ const AdvancedFamilyTree = () => {
     
     // Set initial zoom for tree view
     if (viewMode === 'tree') {
-      setupInitialZoom(svgSelection, zoom, containerWidth);
+      setupInitialZoom(svgSelection, zoom, containerWidth, containerHeight);
     }
     
     // Store the current svgRef for cleanup
@@ -946,81 +753,9 @@ const AdvancedFamilyTree = () => {
   };
 
   return (
-<<<<<<< HEAD
-    <div className="w-full h-screen flex flex-col items-center bg-gradient-to-b from-gray-50 to-gray-100 relative">
-      <h1 className="text-3xl font-bold text-gray-800 mt-4 mb-1 absolute top-0 left-4 z-10">Family Tree</h1>
-      
-      {/* Control Panel - Now positioned absolute in top right */}
-      <div className="absolute top-4 right-4 bg-white rounded-xl shadow-sm p-2 flex gap-2 z-10">
-        <button 
-          onClick={resetView}
-          className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 transition-colors duration-200 text-sm"
-        >
-          Reset View
-        </button>
-        <button
-          onClick={toggleView}
-          className="px-2 py-1 bg-blue-500 hover:bg-blue-600 rounded-md text-white transition-colors duration-200 text-sm"
-        >
-          {viewMode === 'tree' ? 'Radial' : 'Tree'} View
-        </button>
-        <div className="flex items-center ml-2">
-          <span className="mr-1 text-gray-600 text-sm">Zoom:</span>
-          <div className="px-2 py-1 bg-gray-100 rounded-md text-gray-700 text-sm">
-            {zoomLevel}x
-          </div>
-        </div>
-      </div>
-      
-      {/* Info Panel - Now positioned absolute in bottom right */}
-      <div className="absolute bottom-4 right-4 bg-white rounded-xl shadow-md p-3 w-56 z-10">
-        <h3 className="font-bold text-gray-800 border-b pb-2 mb-3 text-sm">Family Details</h3>
-        
-        {selectedNode ? (
-          <div className="space-y-2">
-            <div>
-              <p className="text-xs text-gray-500">Name</p>
-              <p className="font-medium text-gray-800 text-sm">{selectedNode.name}</p>
-            </div>
-            
-            <div>
-              <p className="text-xs text-gray-500">Generation</p>
-              <p className="font-medium text-gray-800 text-sm">{selectedNode.level}</p>
-            </div>
-            
-            {selectedNode.depth < 2 && (
-              <div>
-                <p className="text-xs text-gray-500">Children</p>
-                <p className="font-medium text-gray-800 text-sm">{selectedNode.children}</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-gray-500 text-xs italic">
-            Hover over a family member to see their details.
-          </div>
-        )}
-        
-        <div className="mt-4 pt-2 border-t">
-          <h4 className="font-medium text-gray-700 mb-1 text-xs">Legend</h4>
-          <div className="space-y-1">
-            <div className="flex items-center">
-              <div className="w-3 h-3 rounded-md bg-teal-500 mr-2"></div>
-              <span className="text-gray-700 text-xs">Root</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 rounded-md bg-blue-500 mr-2"></div>
-              <span className="text-gray-700 text-xs">Uncles & Aunts</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 rounded-md bg-gray-200 mr-2"></div>
-              <span className="text-gray-700 text-xs">Children</span>
-            </div>
-          </div>
-=======
     <div className="w-full h-screen flex flex-col relative">
       {/* Control Panel */}
-      <div className="absolute top-4 right-4 z-10 bg-white p-2 rounded-lg shadow-md flex gap-2">
+      <div className="absolute top-4 right-4 z-10 bg-white p-2 rounded-lg shadow-md flex flex-col sm:flex-row gap-2">
         <button 
           onClick={resetView}
           className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
@@ -1039,6 +774,9 @@ const AdvancedFamilyTree = () => {
         >
           {infoVisible ? 'Hide Info' : 'Show Info'}
         </button>
+        <div className="text-xs mt-1 sm:mt-0 text-gray-600">
+          Nodes per row: {CONFIG.getNodesPerRow(window.innerWidth)}
+        </div>
       </div>
       
       {/* Info Panel */}
@@ -1050,23 +788,12 @@ const AdvancedFamilyTree = () => {
             <p className="text-sm">Children: {selectedNode.children}</p>
           )}
           <p className="text-sm mt-2">Zoom Level: {zoomLevel}x</p>
->>>>>>> d66f112 (Add family tree visualization)
         </div>
       )}
       
-<<<<<<< HEAD
-      {/* Main Visualization - Takes full screen */}
-      <div className="w-full h-full overflow-hidden">
-        <svg ref={svgRef} width="100%" height="100%" className="cursor-move"></svg>
-      </div>
-      
-      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 bg-white bg-opacity-70 px-2 py-1 rounded-full">
-        Scroll to zoom, drag to pan, click on nodes to focus
-=======
       {/* Main Visualization */}
       <div className="w-full h-full flex items-center justify-center overflow-hidden">
         <svg ref={svgRef} width="100%" height="100%" className="cursor-move"></svg>
->>>>>>> d66f112 (Add family tree visualization)
       </div>
     </div>
   );
