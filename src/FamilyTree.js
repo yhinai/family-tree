@@ -140,18 +140,19 @@ const AdvancedFamilyTree = () => {
       ]
     };
 
-    // Get container dimensions
-    const containerWidth = svgRef.current.clientWidth || 1000;
-    const containerHeight = 800;
+    // Get container dimensions - use the full window size
+    const containerWidth = window.innerWidth || 1200;
+    const containerHeight = window.innerHeight || 800;
 
     // Create hierarchy
     const root = d3.hierarchy(data);
     
-    // Define layout based on view mode
+    // Modified layout to allow more space and prevent overlapping
     let layout;
     if (viewMode === 'tree') {
+      // Use nodeSize instead of overall size to prevent overlapping
       layout = d3.tree()
-        .size([containerWidth - 100, containerHeight - 160]);
+        .nodeSize([150, 120]); // Increase horizontal spacing between nodes
     } else {
       layout = d3.cluster()
         .size([2 * Math.PI, Math.min(containerWidth, containerHeight) / 2 - 120]);
@@ -160,10 +161,54 @@ const AdvancedFamilyTree = () => {
     // Assign x and y coordinates to each node
     layout(root);
 
-    // Create the SVG element
+    // For tree layout, adjust second generation positions to prevent overlap
+    if (viewMode === 'tree') {
+      // Group nodes by their parent
+      const parentMap = new Map();
+      root.descendants().forEach(node => {
+        if (node.depth === 2) { // Second generation
+          const parentId = node.parent.data.name;
+          if (!parentMap.has(parentId)) {
+            parentMap.set(parentId, []);
+          }
+          parentMap.get(parentId).push(node);
+        }
+      });
+      
+      // For each parent, adjust children positions if needed
+      parentMap.forEach((children, parentId) => {
+        if (children.length > 1) {
+          // Sort children by their original x position
+          children.sort((a, b) => a.x - b.x);
+          
+          // Calculate how many children to place per row
+          const maxPerRow = 3; // Adjust as needed
+          const rows = Math.ceil(children.length / maxPerRow);
+          
+          for (let i = 0; i < children.length; i++) {
+            const row = Math.floor(i / maxPerRow);
+            const col = i % maxPerRow;
+            const node = children[i];
+            
+            // Original x position of the parent
+            const parentX = node.parent.x;
+            
+            // Offset from parent position
+            const xOffset = (col - (Math.min(children.length, maxPerRow) - 1) / 2) * 160;
+            
+            // Update node position
+            node.x = parentX + xOffset;
+            node.y = node.parent.y + 180 + row * 100; // Vertical stacking
+          }
+        }
+      });
+    }
+
+    // Create the SVG element - make it fill the entire container
     const svg = d3.select(svgRef.current)
-      .attr("width", containerWidth)
-      .attr("height", containerHeight)
+      .attr("width", "100%")
+      .attr("height", "100%")
+      .attr("viewBox", [0, 0, containerWidth, containerHeight])
       .append("g");
       
     if (viewMode === 'tree') {
@@ -319,13 +364,33 @@ const AdvancedFamilyTree = () => {
         }
       });
 
-    // Add node backgrounds
+    // Function to measure text width - needed for second generation
+    const getTextWidth = (text, fontSize) => {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      context.font = `${fontSize}px Arial, sans-serif`;
+      return context.measureText(text).width;
+    };
+
+    // Add node backgrounds with dynamic width based on text length for second generation
     nodes.append("rect")
       .attr("rx", 8)
       .attr("ry", 8)
-      .attr("x", d => d.depth === 2 ? -45 : -60)
+      .attr("x", d => {
+        if (d.depth === 2) {
+          const textWidth = getTextWidth(d.data.name, 12);
+          return -Math.max(textWidth/2 + 20, 45); // Ensure minimum width
+        }
+        return d.depth === 0 ? -60 : -60;
+      })
       .attr("y", -15)
-      .attr("width", d => d.depth === 2 ? 90 : 120)
+      .attr("width", d => {
+        if (d.depth === 2) {
+          const textWidth = getTextWidth(d.data.name, 12);
+          return Math.max(textWidth + 40, 90); // Ensure minimum width
+        }
+        return 120;
+      })
       .attr("height", 30)
       .attr("fill", d => {
         if (d.depth === 0) return "url(#rootGradient)";
@@ -466,97 +531,85 @@ const AdvancedFamilyTree = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col items-center p-4 bg-gradient-to-b from-gray-50 to-gray-100">
-      <h1 className="text-3xl font-bold text-gray-800 mb-1">Family Tree</h1>
-      <p className="text-gray-600 mb-4">Interactive visualization with advanced features</p>
+    <div className="w-full h-screen flex flex-col items-center bg-gradient-to-b from-gray-50 to-gray-100 relative">
+      <h1 className="text-3xl font-bold text-gray-800 mt-4 mb-1 absolute top-0 left-4 z-10">Family Tree</h1>
       
-      {/* Control Panel */}
-      <div className="w-full max-w-6xl bg-white rounded-xl shadow-sm p-3 mb-4 flex justify-between items-center">
-        <div className="flex items-center">
-          <button 
-            onClick={resetView}
-            className="mr-3 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 transition-colors duration-200"
-          >
-            Reset View
-          </button>
-          <button
-            onClick={toggleView}
-            className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-md text-white transition-colors duration-200"
-          >
-            Switch to {viewMode === 'tree' ? 'Radial' : 'Tree'} View
-          </button>
-        </div>
-        
-        <div className="flex items-center">
-          <span className="mr-2 text-gray-600">Zoom:</span>
-          <div className="px-3 py-1 bg-gray-100 rounded-md text-gray-700">
+      {/* Control Panel - Now positioned absolute in top right */}
+      <div className="absolute top-4 right-4 bg-white rounded-xl shadow-sm p-2 flex gap-2 z-10">
+        <button 
+          onClick={resetView}
+          className="px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 transition-colors duration-200 text-sm"
+        >
+          Reset View
+        </button>
+        <button
+          onClick={toggleView}
+          className="px-2 py-1 bg-blue-500 hover:bg-blue-600 rounded-md text-white transition-colors duration-200 text-sm"
+        >
+          {viewMode === 'tree' ? 'Radial' : 'Tree'} View
+        </button>
+        <div className="flex items-center ml-2">
+          <span className="mr-1 text-gray-600 text-sm">Zoom:</span>
+          <div className="px-2 py-1 bg-gray-100 rounded-md text-gray-700 text-sm">
             {zoomLevel}x
           </div>
         </div>
       </div>
       
-      <div className="w-full max-w-6xl flex gap-4">
-        {/* Main Visualization */}
-        <div className="flex-grow bg-white rounded-xl shadow-md p-4 overflow-hidden">
-          <div className="w-full overflow-auto relative" style={{ height: "600px" }}>
-            <svg ref={svgRef} width="100%" height="600" className="cursor-move"></svg>
-          </div>
-        </div>
+      {/* Info Panel - Now positioned absolute in bottom right */}
+      <div className="absolute bottom-4 right-4 bg-white rounded-xl shadow-md p-3 w-56 z-10">
+        <h3 className="font-bold text-gray-800 border-b pb-2 mb-3 text-sm">Family Details</h3>
         
-        {/* Info Panel */}
-        <div className="w-64 bg-white rounded-xl shadow-md p-4 h-600">
-          <h3 className="font-bold text-gray-800 border-b pb-2 mb-3">Family Details</h3>
-          
-          {selectedNode ? (
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm text-gray-500">Name</p>
-                <p className="font-medium text-gray-800">{selectedNode.name}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-500">Generation</p>
-                <p className="font-medium text-gray-800">{selectedNode.level}</p>
-              </div>
-              
-              {selectedNode.depth < 2 && (
-                <div>
-                  <p className="text-sm text-gray-500">Children</p>
-                  <p className="font-medium text-gray-800">{selectedNode.children}</p>
-                </div>
-              )}
-              
-              <div className="mt-6 pt-4 border-t text-sm text-gray-500">
-                Click on a family member to center the view on them.
-              </div>
+        {selectedNode ? (
+          <div className="space-y-2">
+            <div>
+              <p className="text-xs text-gray-500">Name</p>
+              <p className="font-medium text-gray-800 text-sm">{selectedNode.name}</p>
             </div>
-          ) : (
-            <div className="text-gray-500 text-sm italic">
-              Hover over a family member to see their details.
+            
+            <div>
+              <p className="text-xs text-gray-500">Generation</p>
+              <p className="font-medium text-gray-800 text-sm">{selectedNode.level}</p>
             </div>
-          )}
-          
-          <div className="mt-6 pt-4 border-t">
-            <h4 className="font-medium text-gray-700 mb-2">Legend</h4>
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-md bg-teal-500 mr-2"></div>
-                <span className="text-gray-700 text-sm">Root</span>
+            
+            {selectedNode.depth < 2 && (
+              <div>
+                <p className="text-xs text-gray-500">Children</p>
+                <p className="font-medium text-gray-800 text-sm">{selectedNode.children}</p>
               </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-md bg-blue-500 mr-2"></div>
-                <span className="text-gray-700 text-sm">Uncles & Aunts</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-3 h-3 rounded-md bg-gray-200 mr-2"></div>
-                <span className="text-gray-700 text-sm">Children</span>
-              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-gray-500 text-xs italic">
+            Hover over a family member to see their details.
+          </div>
+        )}
+        
+        <div className="mt-4 pt-2 border-t">
+          <h4 className="font-medium text-gray-700 mb-1 text-xs">Legend</h4>
+          <div className="space-y-1">
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-md bg-teal-500 mr-2"></div>
+              <span className="text-gray-700 text-xs">Root</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-md bg-blue-500 mr-2"></div>
+              <span className="text-gray-700 text-xs">Uncles & Aunts</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-md bg-gray-200 mr-2"></div>
+              <span className="text-gray-700 text-xs">Children</span>
             </div>
           </div>
         </div>
       </div>
       
-      <div className="w-full max-w-6xl text-center mt-4 text-sm text-gray-500">
+      {/* Main Visualization - Takes full screen */}
+      <div className="w-full h-full overflow-hidden">
+        <svg ref={svgRef} width="100%" height="100%" className="cursor-move"></svg>
+      </div>
+      
+      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 bg-white bg-opacity-70 px-2 py-1 rounded-full">
         Scroll to zoom, drag to pan, click on nodes to focus
       </div>
     </div>
